@@ -1,37 +1,12 @@
 import {useEffect, useState} from 'react';
 import {Link, useParams} from 'react-router-dom';
+import {UsersRound} from 'lucide-react';
 import {api} from '../services/api';
 import {apiErrorMessage} from '../utils/apiError';
-import {Card, Empty, Spinner} from '../components/UI';
+import {Avatar, Badge, Card, Empty, PageHeader, Skeleton} from '../components/UI';
 import type {Guardian, Page, Teacher} from '../types';
-
 type Kind = 'teachers' | 'guardians';
 
-export function PeopleList({kind}: {kind: Kind}) {
-  const [rows, setRows] = useState<(Teacher | Guardian)[] | null>(null);
-  const [error, setError] = useState('');
-  useEffect(() => {
-    let active = true;
-    api.get<Page<Teacher | Guardian>>(`/${kind}/`)
-      .then(response => { if (active) setRows(response.data.results); })
-      .catch(reason => { if (active) { setError(apiErrorMessage(reason, 'Unable to load records.')); setRows([]); } });
-    return () => { active = false; };
-  }, [kind]);
-  return <><div className="page-title"><div><h1>{kind === 'teachers' ? 'Teachers' : 'Parents / Guardians'}</h1><p>Select a record to view its assigned students.</p></div></div><Card>{error && <div className="alert" role="alert">{error}</div>}{!rows ? <Spinner/> : !rows.length ? <Empty text="No records available."/> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Contact</th><th>Students</th><th>Status</th></tr></thead><tbody>{rows.map(row => {const name = 'name' in row ? row.name : `${row.first_name} ${row.last_name}`; return <tr key={row.id}><td><Link to={`/${kind}/${row.id}`}><strong>{name}</strong></Link></td><td>{row.phone || row.email || '—'}</td><td>{row.student_count}</td><td>{row.is_active ? 'Active' : 'Inactive'}</td></tr>;})}</tbody></table></div>}</Card></>;
-}
+export function PeopleList({kind}: {kind: Kind}) {const [rows, setRows] = useState<(Teacher | Guardian)[] | null>(null); const [error, setError] = useState(''); useEffect(() => {let active = true; api.get<Page<Teacher | Guardian>>(`/${kind}/`).then(response => {if (active) setRows(response.data.results);}).catch(reason => {if (active) {setError(apiErrorMessage(reason, 'Unable to load records.')); setRows([]);}}); return () => {active = false;};}, [kind]); const title = kind === 'teachers' ? 'Teachers' : 'Parents / Guardians'; return <><PageHeader eyebrow="People directory" title={title} description={`Review ${title.toLowerCase()} and the students associated with each record.`}/><Card>{error && <div className="alert" role="alert">{error}</div>}{!rows ? <Skeleton rows={6}/> : !rows.length ? <Empty icon={UsersRound} text={`No ${title.toLowerCase()} found`} description="Records will appear here when they become available."/> : <div className="table-wrap"><table><thead><tr><th>Name</th><th>Contact</th><th>Students</th><th>Status</th></tr></thead><tbody>{rows.map(row => {const name = 'name' in row ? row.name : `${row.first_name} ${row.last_name}`; return <tr key={row.id}><td><div className="actor-cell"><Avatar name={name} size="sm"/><span><Link to={`/${kind}/${row.id}`}><strong>{name}</strong></Link><small>{kind === 'teachers' ? 'Teacher profile' : 'Guardian record'}</small></span></div></td><td>{row.phone || row.email || '—'}</td><td>{row.student_count}</td><td><Badge tone={row.is_active ? 'active' : 'inactive'}>{row.is_active ? 'Active' : 'Inactive'}</Badge></td></tr>;})}</tbody></table></div>}</Card></>;}
 
-export function PeopleProfile({kind}: {kind: Kind}) {
-  const {id} = useParams();
-  const [row, setRow] = useState<Teacher | Guardian | null>(null);
-  const [error, setError] = useState('');
-  useEffect(() => {
-    let active = true;
-    api.get<Teacher | Guardian>(`/${kind}/${id}/`)
-      .then(response => { if (active) setRow(response.data); })
-      .catch(reason => { if (active) setError(apiErrorMessage(reason, 'Unable to load this record.')); });
-    return () => { active = false; };
-  }, [id, kind]);
-  if (!row) return error ? <div className="alert" role="alert">{error}</div> : <Spinner/>;
-  const name = 'name' in row ? row.name : `${row.first_name} ${row.last_name}`;
-  return <><div className="page-title"><div><h1>{name}</h1><p>{kind === 'teachers' ? 'Teacher' : 'Parent / guardian'} · {row.phone || row.email || 'No contact details'}</p></div></div><Card><h2>Associated students</h2>{row.students.length ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>ID</th></tr></thead><tbody>{row.students.map(student => <tr key={student.id}><td><Link to={`/students/${student.id}`}>{student.name}</Link></td><td>{student.student_id}</td></tr>)}</tbody></table></div> : <Empty text="No students assigned."/>}</Card></>;
-}
+export function PeopleProfile({kind}: {kind: Kind}) {const {id} = useParams(); const [row, setRow] = useState<Teacher | Guardian | null>(null); const [error, setError] = useState(''); useEffect(() => {let active = true; api.get<Teacher | Guardian>(`/${kind}/${id}/`).then(response => {if (active) setRow(response.data);}).catch(reason => {if (active) setError(apiErrorMessage(reason, 'Unable to load this record.'));}); return () => {active = false;};}, [id, kind]); if (!row) return error ? <div className="alert" role="alert">{error}</div> : <Skeleton rows={4}/>; const name = 'name' in row ? row.name : `${row.first_name} ${row.last_name}`; return <><PageHeader eyebrow="People directory" title={kind === 'teachers' ? 'Teacher Profile' : 'Guardian Profile'} description="Review contact information and associated students."/><div className="profile-hero"><Avatar name={name} size="lg"/><div><h1>{name}</h1><p>{kind === 'teachers' ? 'Teacher' : 'Parent / guardian'} · {row.phone || row.email || 'No contact details'}</p></div><span className="profile-status"><Badge tone={row.is_active ? 'active' : 'inactive'}>{row.is_active ? 'Active' : 'Inactive'}</Badge></span></div><Card><h2>Associated students</h2>{row.students.length ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Student ID</th></tr></thead><tbody>{row.students.map(student => <tr key={student.id}><td><Link to={`/students/${student.id}`}><strong>{student.name}</strong></Link></td><td>{student.student_id}</td></tr>)}</tbody></table></div> : <Empty text="No students assigned" description="Associated student records will appear here."/>}</Card></>;}
