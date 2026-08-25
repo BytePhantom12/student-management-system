@@ -1,0 +1,2 @@
+import {Navigate,Outlet,useLocation} from 'react-router-dom'; import {useAuth} from '../context/auth'; import {Spinner} from './UI';
+export default function SuperuserRoute(){const {user,loading}=useAuth(),location=useLocation();if(loading)return <Spinner/>;if(!user)return <Navigate to="/login" state={{from:location.pathname}} replace/>;if(user.is_superuser!==true)return <Navigate to="/dashboard" replace/>;return <Outlet/>}
