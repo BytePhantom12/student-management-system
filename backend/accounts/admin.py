@@ -15,20 +15,24 @@ admin.site.register(User, UserAdmin)
 
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ("user", "phone", "is_active", "created_at")
+    list_display = ("user", "phone", "is_active", "has_profile_image", "created_at")
     list_filter = ("is_active",)
     search_fields = ("user__username", "user__first_name", "user__last_name", "user__email", "phone")
     list_select_related = ("user",)
+    @admin.display(boolean=True, description="Profile image")
+    def has_profile_image(self, obj): return bool(obj.profile_image_pathname)
 
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ("student_id", "first_name", "last_name", "status", "assigned_teacher", "primary_guardian", "enrollment_date")
+    list_display = ("student_id", "first_name", "last_name", "status", "assigned_teacher", "primary_guardian", "has_profile_image", "enrollment_date")
     list_filter = ("status", "gender", "assigned_teacher", "primary_guardian", "enrollment_date")
     search_fields = ("student_id", "first_name", "last_name", "email", "phone", "guardian_name", "guardian_phone")
     list_select_related = ("assigned_teacher", "assigned_teacher__user", "primary_guardian")
     autocomplete_fields = ("assigned_teacher", "primary_guardian")
     date_hierarchy = "enrollment_date"
+    @admin.display(boolean=True, description="Profile image")
+    def has_profile_image(self, obj): return bool(obj.profile_image_pathname)
 
 @admin.register(Guardian)
 class GuardianAdmin(admin.ModelAdmin):

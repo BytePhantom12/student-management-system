@@ -46,7 +46,7 @@ class AttendanceViewSet(ModelViewSet):
         records=serializer.save(); return Response(AttendanceSerializer(records,many=True).data, status=201)
     @action(detail=False,methods=["get"])
     def statistics(self,request):
-        qs=self.get_queryset()
+        qs=self.filter_queryset(self.get_queryset())
         total=qs.count(); counts={row["status"]:row["count"] for row in qs.values("status").annotate(count=Count("id"))}
         attended=counts.get("present",0)+counts.get("late",0)
         return Response({"total":total,"present":counts.get("present",0),"absent":counts.get("absent",0),"late":counts.get("late",0),"excused":counts.get("excused",0),"attendance_percentage":round(attended*100/total,1) if total else 0})

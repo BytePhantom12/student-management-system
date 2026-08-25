@@ -11,10 +11,19 @@ class StudentSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField(); teacher_name = serializers.CharField(source="assigned_teacher.user.get_full_name", read_only=True)
     teacher = TeacherSummarySerializer(source="assigned_teacher", read_only=True)
     parent = GuardianSummarySerializer(source="primary_guardian", read_only=True)
+    has_profile_image = serializers.SerializerMethodField()
     class Meta:
-        model = Student; fields = "__all__"; read_only_fields = ("created_at", "updated_at")
+        model = Student
+        fields = (
+            "id", "student_id", "first_name", "last_name", "full_name", "gender", "date_of_birth",
+            "phone", "email", "address", "guardian_name", "guardian_phone", "guardian_relationship",
+            "enrollment_date", "status", "assigned_teacher", "primary_guardian", "teacher_name", "teacher",
+            "parent", "notes", "has_profile_image", "created_at", "updated_at",
+        )
+        read_only_fields = ("created_at", "updated_at")
         extra_kwargs = {"guardian_name": {"required": False}, "guardian_phone": {"required": False}}
     def get_full_name(self, obj) -> str: return f"{obj.first_name} {obj.last_name}"
+    def get_has_profile_image(self, obj) -> bool: return bool(obj.profile_image_pathname)
     def validate(self, attrs):
         teacher = attrs.get("assigned_teacher")
         guardian = attrs.get("primary_guardian")

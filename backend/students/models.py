@@ -24,6 +24,7 @@ class Student(models.Model):
     enrollment_date = models.DateField(); status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE, db_index=True)
     assigned_teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT, related_name="students", null=True, blank=True)
     primary_guardian = models.ForeignKey(Guardian, on_delete=models.PROTECT, related_name="students", null=True, blank=True)
+    profile_image_pathname = models.CharField(max_length=500, null=True, blank=True)
     notes = models.TextField(blank=True); created_at = models.DateTimeField(auto_now_add=True); updated_at = models.DateTimeField(auto_now=True)
     class Meta: indexes = [models.Index(fields=["last_name", "first_name"]), models.Index(fields=["assigned_teacher", "status"]), models.Index(fields=["primary_guardian", "status"])]
     def __str__(self): return f"{self.student_id} - {self.first_name} {self.last_name}"

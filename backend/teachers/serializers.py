@@ -11,9 +11,11 @@ class TeacherSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, min_length=8)
     student_count = serializers.IntegerField(read_only=True)
     students = serializers.SerializerMethodField()
-    class Meta: model = Teacher; fields = ("id", "username", "password", "first_name", "last_name", "email", "phone", "is_active", "student_count", "students")
+    has_profile_image = serializers.SerializerMethodField()
+    class Meta: model = Teacher; fields = ("id", "username", "password", "first_name", "last_name", "email", "phone", "is_active", "student_count", "students", "has_profile_image")
     def get_students(self, obj):
         return [{"id": s.id, "student_id": s.student_id, "name": f"{s.first_name} {s.last_name}"} for s in obj.students.all()]
+    def get_has_profile_image(self, obj) -> bool: return bool(obj.profile_image_pathname)
     def validate(self, attrs):
         if self.instance is None and not attrs.get("password"):
             raise serializers.ValidationError({"password": "This field is required."})
@@ -38,3 +40,21 @@ class TeacherSerializer(serializers.ModelSerializer):
         if "is_active" in data: instance.user.is_active = data["is_active"]
         instance.user.save()
         return super().update(instance, data)
+
+
+class TeacherSelfSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    role = serializers.CharField(source="user.role", read_only=True)
+    full_name = serializers.SerializerMethodField()
+    has_profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Teacher
+        fields = ("id", "username", "first_name", "last_name", "full_name", "email", "phone", "role", "is_active", "has_profile_image")
+        read_only_fields = fields
+
+    def get_full_name(self, obj) -> str: return obj.user.get_full_name() or obj.user.username
+    def get_has_profile_image(self, obj) -> bool: return bool(obj.profile_image_pathname)

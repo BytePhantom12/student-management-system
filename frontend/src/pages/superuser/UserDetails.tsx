@@ -8,6 +8,7 @@ import {Avatar, Badge, Button, Card, Input, PageHeader, Select, Skeleton} from '
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Feedback from '../../components/Feedback';
 import type {ManagedUser} from '../../types';
+import ProtectedProfileImage from '../../components/ProtectedProfileImage';
 
 type Confirmation = {title: string; message: string; label: string; danger: boolean; run: () => Promise<void>};
 
@@ -35,7 +36,7 @@ export default function UserDetails() {
   const displayName = `${account.first_name} ${account.last_name}`.trim() || account.username;
   return <>
     <PageHeader eyebrow="Account management" title="User Details" description="Review identity, application access, and protected system privileges." actions={<Link className="btn" to={`/superuser/users/${account.id}/edit`}><Pencil size={17}/> Edit profile</Link>}/>
-    <div className="profile-hero"><Avatar name={displayName} size="lg"/><div><h1>{displayName} {ownAccount && <Badge tone="superuser">Your account</Badge>}</h1><p>@{account.username} · {account.email || 'No email address'}</p></div><span className="profile-status"><Badge tone={account.is_active ? 'active' : 'inactive'}>{account.is_active ? 'Active account' : 'Inactive account'}</Badge></span></div>
+    <div className="profile-hero">{account.teacher_profile ? <ProtectedProfileImage endpoint={`/teachers/${account.teacher_profile.id}/profile-image/`} hasImage={account.teacher_profile.has_profile_image} name={displayName} size="lg"/> : <Avatar name={displayName} size="lg"/>}<div><h1>{displayName} {ownAccount && <Badge tone="superuser">Your account</Badge>}</h1><p>@{account.username} · {account.email || 'No email address'}</p></div><span className="profile-status"><Badge tone={account.is_active ? 'active' : 'inactive'}>{account.is_active ? 'Active account' : 'Inactive account'}</Badge></span></div>
     {feedback && <Feedback message={feedback} onDismiss={() => setFeedback('')}/>} {error && <Feedback tone="error" message={error} onDismiss={() => setError('')}/>}<div className="profile-grid">
       <Card><h2>Account Information</h2><dl><dt>Full name</dt><dd>{displayName}</dd><dt>Username</dt><dd>@{account.username}</dd><dt>Email</dt><dd>{account.email || '—'}</dd><dt>Date joined</dt><dd>{new Date(account.date_joined).toLocaleString()}</dd><dt>Last login</dt><dd>{account.last_login ? new Date(account.last_login).toLocaleString() : 'Never'}</dd></dl></Card>
       <Card><h2>Access & Permissions</h2><dl><dt>Application Role</dt><dd><Badge tone={account.role}>{account.role}</Badge></dd><dt>Account Status</dt><dd><Badge tone={account.is_active ? 'active' : 'inactive'}>{account.is_active ? 'Active' : 'Inactive'}</Badge></dd><dt>Django Staff</dt><dd>{account.is_staff ? <Badge tone="staff">Enabled</Badge> : 'Disabled'}</dd><dt>System Superuser</dt><dd>{account.is_superuser ? <Badge tone="superuser">Granted</Badge> : 'Not granted'}</dd></dl></Card>

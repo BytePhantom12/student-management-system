@@ -51,6 +51,9 @@ STATIC_URL, STATIC_ROOT = "static/", BASE_DIR / "staticfiles"
 MEDIA_URL, MEDIA_ROOT = "/media/", BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOWED_ORIGINS = [x.strip() for x in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",") if x.strip()]
+BLOB_READ_WRITE_TOKEN = os.getenv("BLOB_READ_WRITE_TOKEN", "")
+BLOB_REQUEST_TIMEOUT_SECONDS = float(os.getenv("BLOB_REQUEST_TIMEOUT_SECONDS", "15"))
+PROFILE_IMAGE_MAX_BYTES = int(os.getenv("PROFILE_IMAGE_MAX_BYTES", str(3 * 1024 * 1024)))
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),

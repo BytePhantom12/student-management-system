@@ -1,4 +1,4 @@
-import type {ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes} from 'react';
+import type {ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes} from 'react';
 import type {LucideIcon} from 'lucide-react';
 import {Inbox} from 'lucide-react';
 
@@ -7,6 +7,8 @@ export const Button = ({className = '', ...props}: ButtonHTMLAttributes<HTMLButt
 export const Input = ({label, hint, ...props}: InputHTMLAttributes<HTMLInputElement> & {label?: string; hint?: string}) => <label className="field">{label && <span>{label}</span>}<input {...props}/>{hint && <small>{hint}</small>}</label>;
 
 export const Select = ({label, hint, children, ...props}: SelectHTMLAttributes<HTMLSelectElement> & {label?: string; hint?: string; children: ReactNode}) => <label className="field">{label && <span>{label}</span>}<select {...props}>{children}</select>{hint && <small>{hint}</small>}</label>;
+
+export const Textarea = ({label, hint, ...props}: TextareaHTMLAttributes<HTMLTextAreaElement> & {label?: string; hint?: string}) => <label className="field">{label && <span>{label}</span>}<textarea {...props}/>{hint && <small>{hint}</small>}</label>;
 
 export const Card = ({children, className = ''}: {children: ReactNode; className?: string}) => <section className={`card ${className}`}>{children}</section>;
 

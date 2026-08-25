@@ -5,10 +5,16 @@ from drf_spectacular.utils import extend_schema_field
 from .models import User
 class UserSerializer(serializers.ModelSerializer):
     is_admin = serializers.BooleanField(read_only=True)
+    has_profile_image = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ("id", "username", "first_name", "last_name", "email", "role", "is_active", "is_staff", "is_superuser", "is_admin")
+        fields = ("id", "username", "first_name", "last_name", "email", "role", "is_active", "is_staff", "is_superuser", "is_admin", "has_profile_image")
         read_only_fields = ("id", "is_staff", "is_superuser", "is_admin")
+    def get_has_profile_image(self, obj) -> bool:
+        try:
+            return bool(obj.teacher_profile.profile_image_pathname)
+        except User.teacher_profile.RelatedObjectDoesNotExist:
+            return False
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
@@ -18,6 +24,7 @@ class SuperuserTeacherProfileSummarySerializer(serializers.Serializer):
     phone = serializers.CharField()
     is_active = serializers.BooleanField()
     student_count = serializers.IntegerField()
+    has_profile_image = serializers.BooleanField()
 
 
 class SuperuserUserOutputMixin:
@@ -32,6 +39,7 @@ class SuperuserUserOutputMixin:
             "phone": teacher.phone,
             "is_active": teacher.is_active,
             "student_count": getattr(obj, "teacher_student_count", teacher.students.count()),
+            "has_profile_image": bool(teacher.profile_image_pathname),
         }
 
 

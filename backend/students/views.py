@@ -3,7 +3,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from common import IsAdmin
+from profile_images import ProfileImageUploadSerializer, protected_profile_image_response, remove_profile_image, replace_profile_image, uploaded_profile_image
 from .models import Guardian, Student, StudentNote
 from .serializers import GuardianSerializer, StudentSerializer, NoteSerializer
 class AssignedQuerysetMixin:
@@ -30,6 +33,29 @@ class StudentViewSet(AssignedQuerysetMixin, ModelViewSet):
     @action(detail=True, methods=["post"])
     def deactivate(self, request, pk=None):
         student=self.get_object(); student.status=Student.Status.INACTIVE; student.save(update_fields=["status","updated_at"]); return Response(self.get_serializer(student).data)
+    @extend_schema(methods=["GET"], responses={(200, "image/webp"): OpenApiTypes.BINARY})
+    @extend_schema(methods=["POST"], request=ProfileImageUploadSerializer, responses=StudentSerializer)
+    @extend_schema(methods=["DELETE"], responses={204: None})
+    @action(detail=True, methods=["get", "post", "delete"], url_path="profile-image")
+    def profile_image(self, request, pk=None):
+        student = self.get_object()
+        if request.method == "GET":
+            return protected_profile_image_response(instance=student, request=request)
+        if request.method == "DELETE":
+            remove_profile_image(
+                instance=student,
+                actor=request.user,
+                action="student_profile_image_removed",
+            )
+            return Response(status=204)
+        replace_profile_image(
+            instance=student,
+            uploaded_file=uploaded_profile_image(request),
+            actor=request.user,
+            owner_type="students",
+            action="student_profile_image_updated",
+        )
+        return Response(self.get_serializer(student).data)
 class GuardianViewSet(ModelViewSet):
     serializer_class = GuardianSerializer
     filterset_fields = ("is_active",)
