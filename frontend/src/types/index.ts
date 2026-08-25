@@ -1,4 +1,15 @@
-export type User={id:number;username:string;first_name:string;last_name:string;email:string;role:'admin'|'teacher'};
-export type Student={id:number;student_id:string;first_name:string;last_name:string;full_name:string;gender:string;date_of_birth:string;phone:string;email:string;guardian_name:string;guardian_phone:string;guardian_relationship:string;enrollment_date:string;status:'active'|'inactive';assigned_teacher:number|null;teacher_name:string;notes:string};
+export type User={id:number;username:string;first_name:string;last_name:string;email:string;role:'admin'|'teacher';is_active:boolean;is_staff:boolean;is_superuser:boolean;is_admin:boolean};
+export type TeacherSummary={id:number;name:string;email:string;phone:string};
+export type GuardianSummary={id:number;name:string;phone:string;email:string;is_active:boolean};
+export type Student={id:number;student_id:string;first_name:string;last_name:string;full_name:string;gender:string;date_of_birth:string;phone:string;email:string;guardian_name:string;guardian_phone:string;guardian_relationship:string;enrollment_date:string;status:'active'|'inactive';assigned_teacher:number|null;primary_guardian:number|null;teacher_name:string;teacher:TeacherSummary|null;parent:GuardianSummary|null;notes:string};
+export type PersonStudent={id:number;student_id:string;name:string};
+export type Teacher={id:number;first_name:string;last_name:string;email:string;phone:string;is_active:boolean;student_count:number;students:PersonStudent[]};
+export type Guardian={id:number;name:string;phone:string;email:string;address:string;is_active:boolean;student_count:number;students:PersonStudent[]};
+export type AttendanceStatus='present'|'absent'|'late'|'excused';
+export type AttendanceSession={id:number;date:string;title:string;teacher:number|null;teacher_name:string;record_count:number;notes:string};
+export type AttendanceRecord={id:number;student:number;student_name:string;date:string;status:AttendanceStatus;session:number|null;recorded_by:number;recorded_by_name:string;notes:string};
+export type ManagedTeacherProfile={id:number;phone:string;is_active:boolean;student_count:number};
+export type ManagedUser={id:number;username:string;first_name:string;last_name:string;email:string;role:'admin'|'teacher';is_active:boolean;is_staff:boolean;is_superuser:boolean;is_admin?:boolean;date_joined:string;last_login:string|null;teacher_profile:ManagedTeacherProfile|null};
+export type SuperuserDashboardData={total_users:number;active_users:number;inactive_users:number;teacher_role_accounts:number;application_admin_accounts:number;staff_accounts:number;superusers:number;active_teacher_profiles:number;recent_users:ManagedUser[]};
+export type AuditLog={id:number;user:number|null;user_name:string|null;action:string;object_type:string;object_id:string;metadata:Record<string,unknown>;timestamp:string};
 export type Page<T>={count:number;next:string|null;previous:string|null;results:T[]};
-

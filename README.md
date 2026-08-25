@@ -14,7 +14,7 @@ A production-oriented monorepo for managing students at a Quran memorisation ins
 
 ## Architecture
 
-`frontend/` is a Vite + React + TypeScript SPA. `backend/` is Django + DRF split into `accounts`, `teachers`, `students`, `hifz`, `attendance`, `audit`, and `dashboard` apps. MySQL is configured with `DATABASE_URL`; Django ORM constraints preserve history and integrity.
+`frontend/` is a Vite + React + TypeScript SPA. `backend/` is Django + DRF split into `accounts`, `teachers`, `students`, `hifz`, `attendance`, `audit`, and `dashboard` apps. MySQL is configured with the `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_PORT` environment variables; Django ORM constraints preserve history and integrity.
 
 ## Setup
 
@@ -22,7 +22,7 @@ Requirements: Python 3.11+, Node 20+, MySQL 8.0+.
 
 ```powershell
 Copy-Item .env.example .env
-# Create the MySQL database/user, then set DATABASE_URL in .env
+# Create the MySQL database/user, then set the DB_* values in .env
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r backend\requirements.txt

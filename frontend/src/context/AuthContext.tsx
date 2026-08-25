@@ -1,5 +1,37 @@
-import {createContext,useContext,useEffect,useState,type ReactNode} from 'react'; import {api} from '../services/api'; import type {User} from '../types';
-type Auth={user:User|null;loading:boolean;login:(u:string,p:string)=>Promise<void>;logout:()=>Promise<void>}; const C=createContext<Auth|null>(null);
-export function AuthProvider({children}:{children:ReactNode}){const [user,setUser]=useState<User|null>(null),[loading,setLoading]=useState(true);useEffect(()=>{if(!localStorage.getItem('access')){setLoading(false);return}api.get('/auth/me/').then(r=>setUser(r.data)).finally(()=>setLoading(false))},[]);async function login(username:string,password:string){const {data}=await api.post('/auth/login/',{username,password});localStorage.setItem('access',data.access);localStorage.setItem('refresh',data.refresh);setUser((await api.get('/auth/me/')).data)}async function logout(){try{await api.post('/auth/logout/',{refresh:localStorage.getItem('refresh')})}finally{localStorage.clear();setUser(null)}}return <C.Provider value={{user,loading,login,logout}}>{children}</C.Provider>}
-export const useAuth=()=>{const x=useContext(C);if(!x)throw new Error('AuthProvider missing');return x};
+import {useEffect, useState, type ReactNode} from 'react';
+import {api} from '../services/api';
+import type {User} from '../types';
+import {AuthContext} from './auth';
 
+export function AuthProvider({children}: {children: ReactNode}) {
+  const hasStoredSession = Boolean(localStorage.getItem('access'));
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(hasStoredSession);
+
+  useEffect(() => {
+    if (!hasStoredSession) return;
+    let active = true;
+    api.get<User>('/auth/me/')
+      .then(response => { if (active) setUser(response.data); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [hasStoredSession]);
+
+  async function login(username: string, password: string) {
+    const {data} = await api.post('/auth/login/', {username, password});
+    localStorage.setItem('access', data.access);
+    localStorage.setItem('refresh', data.refresh);
+    setUser((await api.get<User>('/auth/me/')).data);
+  }
+
+  async function logout() {
+    try {
+      await api.post('/auth/logout/', {refresh: localStorage.getItem('refresh')});
+    } finally {
+      localStorage.clear();
+      setUser(null);
+    }
+  }
+
+  return <AuthContext.Provider value={{user, loading, login, logout}}>{children}</AuthContext.Provider>;
+}

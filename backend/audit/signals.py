@@ -10,7 +10,9 @@ from teachers.models import Teacher
 @receiver(post_save,sender=Attendance)
 @receiver(post_save,sender=StudentNote)
 def log_change(sender,instance,created,**kwargs):
+    if getattr(instance, "_skip_automatic_audit", False):
+        delattr(instance, "_skip_automatic_audit")
+        return
     from .models import AuditLog
     user=getattr(instance,"recorded_by",None) or getattr(instance,"author",None)
     AuditLog.objects.create(user=user,action=f"{sender.__name__.lower()}_{'created' if created else 'updated'}",object_type=sender.__name__,object_id=str(instance.pk))
-
