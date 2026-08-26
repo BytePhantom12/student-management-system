@@ -3,6 +3,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR.parent / ".env")
@@ -26,19 +27,26 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates", "DIRS": [], "APP_DIRS": True,
               "OPTIONS": {"context_processors": ["django.template.context_processors.request", "django.contrib.auth.context_processors.auth", "django.contrib.messages.context_processors.messages"]}}]
 WSGI_APPLICATION = "config.wsgi.application"
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("DB_NAME", "student_management"),
-        "USER": os.getenv("DB_USER", "Admin12"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "3306"),
-        "OPTIONS": {"charset": "utf8mb4"},
-    }
-}
+def required_env(name):
+    value = os.getenv(name)
+    if not value:
+        raise ImproperlyConfigured(f"Required environment variable {name} is not set.")
+    return value
+
 if IS_TESTING:
     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "test.sqlite3"}}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": required_env("DB_NAME"),
+            "USER": required_env("DB_USER"),
+            "PASSWORD": required_env("DB_PASSWORD"),
+            "HOST": required_env("DB_HOST"),
+            "PORT": required_env("DB_PORT"),
+            "OPTIONS": {"charset": "utf8mb4"},
+        }
+    }
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

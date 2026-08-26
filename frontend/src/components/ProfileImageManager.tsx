@@ -6,7 +6,7 @@ import {Button} from './UI';
 import Feedback from './Feedback';
 
 export default function ProfileImageManager({name, endpoint, hasImage, onChanged}: {name: string; endpoint: string; hasImage: boolean; onChanged?: (hasImage: boolean) => void}) {
-  const [current, setCurrent] = useState(hasImage);
+  const [currentOverride, setCurrent] = useState<boolean|null>(null);const current=currentOverride??hasImage;
   const [file, setFile] = useState<File | null>(null);
   const [removeRequested, setRemoveRequested] = useState(false);
   const [busy, setBusy] = useState(false);
