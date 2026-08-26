@@ -95,8 +95,10 @@ class DomainValidationTests(CoreAuthorizationTests):
 class StudentRelationshipTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_user("relationship-admin", password="StrongPass123!", role="admin")
-        teacher_user = User.objects.create_user("relationship-teacher", password="StrongPass123!", role="teacher")
-        self.teacher = Teacher.objects.create(user=teacher_user)
+        self.teacher_user = User.objects.create_user("relationship-teacher", password="StrongPass123!", role="teacher")
+        self.teacher = Teacher.objects.create(user=self.teacher_user)
+        other_user = User.objects.create_user("relationship-other", password="StrongPass123!", role="teacher")
+        self.other_teacher = Teacher.objects.create(user=other_user)
         self.guardian = Guardian.objects.create(name="Amina Ahmad", phone="555-0100")
         self.client = APIClient(); self.client.force_authenticate(self.admin)
         self.payload = {"student_id":"S100", "first_name":"Sara", "last_name":"Ahmad", "gender":"female", "date_of_birth":"2012-01-01", "guardian_relationship":"Mother", "enrollment_date":str(date.today()), "assigned_teacher":self.teacher.id, "primary_guardian":self.guardian.id}
@@ -106,10 +108,52 @@ class StudentRelationshipTests(TestCase):
         self.assertEqual(response.data["teacher"]["id"], self.teacher.id)
         self.assertEqual(response.data["parent"]["id"], self.guardian.id)
         self.assertEqual(response.data["guardian_name"], self.guardian.name)
-    def test_new_student_requires_primary_guardian(self):
-        self.payload.pop("primary_guardian")
-        response = self.client.post("/api/students/", self.payload, format="json")
-        self.assertEqual(response.status_code, 400)
+    def create(self, student_id, **relationships):
+        payload = {key: value for key, value in self.payload.items() if key not in ("assigned_teacher", "primary_guardian")}
+        payload.update(student_id=student_id, **relationships)
+        return self.client.post("/api/students/", payload, format="json")
+    def test_admin_can_create_all_teacher_guardian_combinations(self):
+        combinations = (
+            ("S110", {"assigned_teacher": self.teacher.id, "primary_guardian": self.guardian.id}),
+            ("S111", {"assigned_teacher": self.teacher.id}),
+            ("S112", {"primary_guardian": self.guardian.id}),
+            ("S113", {}),
+        )
+        for student_id, relationships in combinations:
+            with self.subTest(relationships=relationships):
+                self.assertEqual(self.create(student_id, **relationships).status_code, 201)
+    def test_admin_can_add_and_remove_relationships(self):
+        response = self.create("S114", assigned_teacher=self.teacher.id, primary_guardian=self.guardian.id)
+        student_id = response.data["id"]
+        response = self.client.patch(f"/api/students/{student_id}/", {"assigned_teacher": None, "primary_guardian": None}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.data["teacher"]); self.assertIsNone(response.data["parent"])
+        self.assertEqual(response.data["guardian_name"], ""); self.assertEqual(response.data["guardian_phone"], ""); self.assertEqual(response.data["guardian_relationship"], "")
+        response = self.client.patch(f"/api/students/{student_id}/", {"assigned_teacher": self.teacher.id, "primary_guardian": self.guardian.id, "guardian_relationship": "Mother"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["teacher"]["id"], self.teacher.id); self.assertEqual(response.data["parent"]["id"], self.guardian.id)
+    def test_teacher_create_assigns_self_and_guardian_is_optional(self):
+        self.client.force_authenticate(self.teacher_user)
+        response = self.create("S115", assigned_teacher=self.other_teacher.id)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["assigned_teacher"], self.teacher.id)
+        self.assertIsNone(response.data["primary_guardian"])
+    def test_teacher_cannot_unassign_or_reassign_student(self):
+        student = Student.objects.create(student_id="S116", first_name="Mariam", last_name="Ali", gender="female", date_of_birth=date(2012,1,1), enrollment_date=date.today(), assigned_teacher=self.teacher)
+        self.client.force_authenticate(self.teacher_user)
+        for value in (None, self.other_teacher.id):
+            response = self.client.patch(f"/api/students/{student.id}/", {"assigned_teacher": value}, format="json")
+            self.assertEqual(response.status_code, 200)
+            student.refresh_from_db(); self.assertEqual(student.assigned_teacher, self.teacher)
+    def test_teacher_cannot_access_unassigned_student(self):
+        student = Student.objects.create(student_id="S117", first_name="Noor", last_name="Ali", gender="female", date_of_birth=date(2012,1,1), enrollment_date=date.today())
+        self.client.force_authenticate(self.teacher_user)
+        self.assertEqual(self.client.get(f"/api/students/{student.id}/").status_code, 404)
+    def test_null_relationships_serialize_safely(self):
+        response = self.create("S118")
+        self.assertEqual(response.status_code, 201)
+        for field in ("assigned_teacher", "teacher_name", "teacher", "primary_guardian", "parent"):
+            self.assertIsNone(response.data[field])
     def test_guardian_endpoint_returns_associated_students(self):
         student = Student.objects.create(student_id="S101", first_name="Musa", last_name="Ahmad", gender="male", date_of_birth=date(2011,1,1), guardian_name=self.guardian.name, guardian_phone=self.guardian.phone, guardian_relationship="Mother", enrollment_date=date.today(), assigned_teacher=self.teacher, primary_guardian=self.guardian)
         response = self.client.get(f"/api/guardians/{self.guardian.id}/")

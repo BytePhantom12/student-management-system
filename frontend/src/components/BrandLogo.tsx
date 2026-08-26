@@ -14,6 +14,6 @@ export default function BrandLogo({size = 'medium', decorative = false, classNam
   return <span className={`brand-logo-frame ${size} ${className}`}>
     {failed
       ? <BookOpen className="brand-logo-fallback" role={decorative ? undefined : 'img'} aria-label={label} aria-hidden={decorative || undefined}/>
-      : <img src="/branding/darul-taqwa-logo.jpeg" alt={decorative ? '' : 'Halqatu Darul Taqwa logo'} onError={() => setFailed(true)}/>}
+      : <img src="/branding/darul-taqwa-logo-transparent.png" alt={decorative ? '' : 'Halqatu Darul Taqwa logo'} onError={() => setFailed(true)}/>}
   </span>;
 }

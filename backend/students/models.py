@@ -20,7 +20,7 @@ class Student(models.Model):
     first_name = models.CharField(max_length=100); last_name = models.CharField(max_length=100)
     gender = models.CharField(max_length=10, choices=Gender.choices); date_of_birth = models.DateField()
     phone = models.CharField(max_length=30, blank=True); email = models.EmailField(blank=True); address = models.TextField(blank=True)
-    guardian_name = models.CharField(max_length=200); guardian_phone = models.CharField(max_length=30); guardian_relationship = models.CharField(max_length=80)
+    guardian_name = models.CharField(max_length=200, blank=True, default=""); guardian_phone = models.CharField(max_length=30, blank=True, default=""); guardian_relationship = models.CharField(max_length=80, blank=True, default="")
     enrollment_date = models.DateField(); status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE, db_index=True)
     assigned_teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT, related_name="students", null=True, blank=True)
     primary_guardian = models.ForeignKey(Guardian, on_delete=models.PROTECT, related_name="students", null=True, blank=True)

@@ -1,6 +1,6 @@
-.field textarea{width:100%;min-height:100px;padding:11px 12px;border:1px solid var(--border);border-radius:10px;color:var(--text-primary);background:rgba(3,24,20,.48);outline:0;resize:vertical;font:inherit;line-height:1.55;transition:border var(--speed),box-shadow var(--speed),background var(--speed)}
+.field textarea{width:100%;min-height:100px;padding:11px 12px;border:1px solid var(--border);border-radius:10px;color:var(--text-primary);background:rgba(255,255,255,.82);outline:0;resize:vertical;font:inherit;line-height:1.55;transition:border var(--speed),box-shadow var(--speed),background var(--speed)}
 .field textarea:hover{border-color:var(--border-strong)}
-.field textarea:focus{border-color:rgba(52,211,153,.55);background:rgba(3,24,20,.7);box-shadow:0 0 0 3px rgba(52,211,153,.08)}
+.field textarea:focus{border-color:var(--color-primary);background:#fff;box-shadow:0 0 0 3px rgba(15,81,63,.09)}
 .filter-notice{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;padding:12px 15px;border:1px solid rgba(52,211,153,.18);border-radius:12px;color:var(--text-secondary);background:rgba(52,211,153,.07)}
 .row-actions{display:flex;align-items:center;gap:7px}.row-actions .btn{white-space:nowrap}
 .progress-cell{display:grid;gap:7px;min-width:145px}.progress-cell>span{height:6px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.08)}.progress-cell i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--gold))}

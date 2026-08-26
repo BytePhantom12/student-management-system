@@ -8,7 +8,7 @@ class TeacherSummarySerializer(serializers.Serializer):
     email = serializers.EmailField(source="user.email")
     phone = serializers.CharField()
 class StudentSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField(); teacher_name = serializers.CharField(source="assigned_teacher.user.get_full_name", read_only=True)
+    full_name = serializers.SerializerMethodField(); teacher_name = serializers.SerializerMethodField()
     teacher = TeacherSummarySerializer(source="assigned_teacher", read_only=True)
     parent = GuardianSummarySerializer(source="primary_guardian", read_only=True)
     has_profile_image = serializers.SerializerMethodField()
@@ -21,8 +21,13 @@ class StudentSerializer(serializers.ModelSerializer):
             "parent", "notes", "has_profile_image", "created_at", "updated_at",
         )
         read_only_fields = ("created_at", "updated_at")
-        extra_kwargs = {"guardian_name": {"required": False}, "guardian_phone": {"required": False}}
+        extra_kwargs = {
+            "guardian_name": {"required": False},
+            "guardian_phone": {"required": False},
+            "guardian_relationship": {"required": False},
+        }
     def get_full_name(self, obj) -> str: return f"{obj.first_name} {obj.last_name}"
+    def get_teacher_name(self, obj): return obj.assigned_teacher.user.get_full_name() if obj.assigned_teacher_id else None
     def get_has_profile_image(self, obj) -> bool: return bool(obj.profile_image_pathname)
     def validate(self, attrs):
         teacher = attrs.get("assigned_teacher")
@@ -31,14 +36,18 @@ class StudentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"assigned_teacher": "An inactive teacher cannot be assigned."})
         if guardian is not None and not guardian.is_active:
             raise serializers.ValidationError({"primary_guardian": "An inactive guardian cannot be assigned."})
-        if self.instance is None and guardian is None:
-            raise serializers.ValidationError({"primary_guardian": "A primary parent/guardian is required."})
         return attrs
     def _sync_guardian_snapshot(self, validated_data):
-        guardian = validated_data.get("primary_guardian")
+        if "primary_guardian" not in validated_data:
+            return validated_data
+        guardian = validated_data["primary_guardian"]
         if guardian is not None:
             validated_data["guardian_name"] = guardian.name
             validated_data["guardian_phone"] = guardian.phone
+        else:
+            validated_data["guardian_name"] = ""
+            validated_data["guardian_phone"] = ""
+            validated_data["guardian_relationship"] = ""
         return validated_data
     def create(self, validated_data): return super().create(self._sync_guardian_snapshot(validated_data))
     def update(self, instance, validated_data): return super().update(instance, self._sync_guardian_snapshot(validated_data))
